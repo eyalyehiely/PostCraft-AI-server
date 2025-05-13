@@ -14,14 +14,34 @@ const openai = new OpenAI({
 // Generate blog post
 router.post('/generate', generateLimiter, ClerkExpressRequireAuth(), async (req, res) => {
   try {
-    const { topic, style } = req.body;
+    const { topic, style, wordLimit, pronounStyle } = req.body;
     const clerkId = req.auth.userId;
 
     if (!topic || !style) {
       return res.status(400).json({ error: 'Topic and style are required' });
     }
 
-    const prompt = `Write a ${style} blog post about ${topic}. Make it engaging and informative.`;
+    let prompt = `Write a ${style} blog post about ${topic}.`;
+    
+    if (wordLimit) {
+      prompt += ` Keep it within ${wordLimit} words.`;
+    }
+    
+    if (pronounStyle) {
+      switch (pronounStyle.toLowerCase()) {
+        case 'first':
+          prompt += ' Write in first person (using "I", "we").';
+          break;
+        case 'second':
+          prompt += ' Write in second person (using "you").';
+          break;
+        case 'third':
+          prompt += ' Write in third person (using "he", "she", "they").';
+          break;
+      }
+    }
+
+    prompt += ' Make it engaging and informative.';
 
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
@@ -33,7 +53,9 @@ router.post('/generate', generateLimiter, ClerkExpressRequireAuth(), async (req,
     res.json({
       title: topic,
       content: generatedContent,
-      style
+      style,
+      wordLimit,
+      pronounStyle
     });
   } catch (error) {
     console.error('Error generating post:', error);

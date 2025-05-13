@@ -14,12 +14,21 @@ const postSchema = new mongoose.Schema({
   style: {
     type: String,
     required: true,
-    enum: ['casual', 'professional', 'creative', 'technical']
+    enum: ['casual', 'Professional','Technical', 'Creative','Funny']
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+  wordLimit:{
+    type: Number,
+    required: false
+  },
+  pronounStyle:{
+    type: String,
+    required: false,
+    enum: ['first', 'second', 'third']
   },
   clerkId: {
     type: String,
