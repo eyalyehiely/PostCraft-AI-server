@@ -81,6 +81,8 @@ router.post('/save',
       const post = new Post({
         title,
         content,
+        wordLimit,
+        pronounStyle,
         style,
         author: user._id,
         clerkId,
