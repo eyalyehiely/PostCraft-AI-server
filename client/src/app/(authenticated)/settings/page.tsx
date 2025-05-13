@@ -1,6 +1,6 @@
 'use client'
 
-import { UserButton, useUser } from '@clerk/nextjs'
+import { UserButton, useUser, useClerk } from '@clerk/nextjs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { useTheme } from 'next-themes'
@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 
 export default function SettingsPage() {
   const { user } = useUser()
+  const { signOut } = useClerk()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [firstName, setFirstName] = useState(user?.firstName || '')
@@ -29,17 +30,10 @@ export default function SettingsPage() {
 
   const handleSignOut = async () => {
     try {
-      await window.Clerk.signOut();
-      toast({
-        title: "Signed out",
-        description: "You have been successfully signed out",
-      });
+      await signOut();
+      toast.success("You have been successfully signed out");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive",
-      });
+      toast.error("Failed to sign out");
     }
   };
 

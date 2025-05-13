@@ -2,12 +2,13 @@
 import Link from 'next/link'
 import { Home, Settings, FileText, Menu, X } from 'lucide-react'
 import { useState } from 'react'
-import { UserButton, useUser } from '@clerk/nextjs'
+import { UserButton, useUser, useClerk } from '@clerk/nextjs'
 import { Button } from './ui/button'
 import { toast } from 'sonner'
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const { user } = useUser()
+  const { signOut } = useClerk()
   const pages = [
     {
       name: 'Home',
@@ -28,17 +29,10 @@ export function Sidebar() {
 
   const handleSignOut = async () => {
     try {
-      await window.Clerk.signOut();
-      toast({
-        title: "Signed out",
-        description: "You have been successfully signed out",
-      });
+      await signOut();
+      toast.success("You have been successfully signed out");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive",
-      });
+      toast.error("Failed to sign out");
     }
   };
 
