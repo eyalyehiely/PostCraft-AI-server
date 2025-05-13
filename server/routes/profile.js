@@ -27,10 +27,4 @@ router.patch('/edit-profile', ClerkExpressRequireAuth() , async (req, res) => {
     }
 });
 
-router.get('/user-payments-data/:userId', ClerkExpressRequireAuth(), async (req, res) => {
-    const userId = req.params.userId;
-    const user = await User.findOne({ clerkId: userId });
-    res.status(200).json(user);
-});
-
 module.exports = router;

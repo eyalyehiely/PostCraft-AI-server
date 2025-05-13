@@ -3,9 +3,9 @@ const router = express.Router();
 const { OpenAI } = require('openai');
 const Post = require('../models/Post');
 const User = require('../models/User');
-const { redisClient } = require('../config/redis');
 const { generateLimiter, apiLimiter } = require('../middleware/rateLimiter');
 const { ClerkExpressRequireAuth } = require('@clerk/clerk-sdk-node');
+const redisHandler = require('../middleware/redisHandler');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -14,7 +14,6 @@ const openai = new OpenAI({
 // Generate blog post
 router.post('/generate', generateLimiter, ClerkExpressRequireAuth(), async (req, res) => {
   try {
-    console.log('Auth object:', req.auth);
     const { topic, style } = req.body;
     const clerkId = req.auth.userId;
 
@@ -37,203 +36,183 @@ router.post('/generate', generateLimiter, ClerkExpressRequireAuth(), async (req,
       style
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error generating post:', error);
+    res.status(500).json({ error: 'Failed to generate blog post' });
   }
 });
 
 // Save post
-router.post('/save', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
-  try {
-    const { title, content, style } = req.body;
-    const clerkId = req.auth.userId;
+router.post('/save', 
+  apiLimiter, 
+  ClerkExpressRequireAuth(),
+  redisHandler.deleteFromCache(req => `user_posts:${req.auth.userId}`),
+  async (req, res) => {
+    try {
+      const { title, content, style } = req.body;
+      const clerkId = req.auth.userId;
 
-    // Find or create user
-    let user = await User.findOne({ clerkId });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      let user = await User.findOne({ clerkId });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const post = new Post({
+        title,
+        content,
+        style,
+        author: user._id,
+        clerkId,
+        isPublic: false
+      });
+
+      await post.save();
+      res.status(201).json(post);
+    } catch (error) {
+      console.error('Error saving post:', error);
+      res.status(500).json({ error: 'Failed to save post' });
     }
-
-    const post = new Post({
-      title,
-      content,
-      style,
-      author: user._id,
-      clerkId,
-      isPublic: false
-    });
-
-    await post.save();
-
-    // Invalidate user's posts cache
-    await redisClient.del(`user_posts:${clerkId}`);
-    
-    res.status(201).json(post);
-  } catch (error) {
-    console.error('Error saving post:', error);
-    res.status(500).json({ error: 'Failed to save post' });
-  }
 });
 
 // Get user's posts
-router.get('/user', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
-  try {
-    const clerkId = req.auth.userId;
-    
-    // Try to get from cache first
-    const cachedPosts = await redisClient.get(`user_posts:${clerkId}`);
-    if (cachedPosts) {
-      return res.json(JSON.parse(cachedPosts));
-    }
+router.get('/user', 
+  apiLimiter, 
+  ClerkExpressRequireAuth(),
+  redisHandler.getFromCache(req => `user_posts:${req.auth.userId}`),
+  async (req, res) => {
+    try {
+      const clerkId = req.auth.userId;
+      const user = await User.findOne({ clerkId });
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
 
-    const user = await User.findOne({ clerkId });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      const posts = await Post.find({ author: user._id })
+        .sort({ createdAt: -1 })
+        .populate('author', 'email');
+      
+      res.json(posts);
+    } catch (error) {
+      console.error('Error fetching user posts:', error);
+      res.status(500).json({ error: 'Failed to fetch posts' });
     }
+},
+redisHandler.setToCache(req => `user_posts:${req.auth.userId}`, 300)
+);
 
-    const posts = await Post.find({ author: user._id })
-      .sort({ createdAt: -1 })
-      .populate('author', 'email');
-    
-    // Cache the results for 5 minutes
-    await redisClient.setEx(`user_posts:${clerkId}`, 300, JSON.stringify(posts));
-    
-    res.json(posts);
-  } catch (error) {
-    console.error('Error fetching user posts:', error);
-    res.status(500).json({ error: 'Failed to fetch posts' });
-  }
+// Get single post by UUID
+router.get('/:uuid', 
+  apiLimiter, 
+  ClerkExpressRequireAuth(),
+  redisHandler.getFromCache(req => `post:${req.params.uuid}`),
+  async (req, res) => {
+    try {
+      const { uuid } = req.params;
+      const clerkId = req.auth.userId;
+
+      const post = await Post.findOne({ uuid }).populate('author', 'email');
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      if (!post.isPublic && post.clerkId !== clerkId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      res.json(post);
+    } catch (error) {
+      console.error('Error fetching post:', error);
+      res.status(500).json({ error: 'Failed to fetch post' });
+    }
+},
+redisHandler.setToCache(req => `post:${req.params.uuid}`, 3600)
+);
+
+// Get public post by publicId
+router.get('/public/:publicId', 
+  apiLimiter, 
+  redisHandler.getFromCache(req => `public_post:${req.params.publicId}`),
+  async (req, res) => {
+    try {
+      const { publicId } = req.params;
+      const post = await Post.findOne({ publicId, isPublic: true })
+        .populate('author', 'email');
+      
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      res.json(post);
+    } catch (error) {
+      console.error('Error fetching public post:', error);
+      res.status(500).json({ error: 'Failed to fetch post' });
+    }
+},
+redisHandler.setToCache(req => `public_post:${req.params.publicId}`, 3600)
+);
+
+// Update post
+router.put('/:uuid', 
+  apiLimiter, 
+  ClerkExpressRequireAuth(),
+  redisHandler.deleteMultipleFromCache(req => [
+    `post:${req.params.uuid}`,
+    `user_posts:${req.auth.userId}`,
+    req.body.publicId ? `public_post:${req.body.publicId}` : null
+  ].filter(Boolean)),
+  async (req, res) => {
+    try {
+      const { uuid } = req.params;
+      const { title, content, style, isPublic } = req.body;
+      const clerkId = req.auth.userId;
+
+      const post = await Post.findOne({ uuid });
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      if (post.clerkId !== clerkId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      if (title) post.title = title;
+      if (content) post.content = content;
+      if (style) post.style = style;
+      if (typeof isPublic === 'boolean') post.isPublic = isPublic;
+
+      await post.save();
+      res.json(post);
+    } catch (error) {
+      console.error('Error updating post:', error);
+      res.status(500).json({ error: 'Failed to update post' });
+    }
 });
 
-// Get single post by UUID (internal API access)
-router.get('/:uuid', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
-  try {
-    const { uuid } = req.params;
-    const clerkId = req.auth.userId;
-    
-    // Try to get from cache first
-    const cachedPost = await redisClient.get(`post:${uuid}`);
-    if (cachedPost) {
-      return res.json(JSON.parse(cachedPost));
-    }
+// Delete post
+router.delete('/:uuid', 
+  apiLimiter, 
+  ClerkExpressRequireAuth(),
+  redisHandler.deleteFromCache(req => `user_posts:${req.auth.userId}`),
+  async (req, res) => {
+    try {
+      const { uuid } = req.params;
+      const clerkId = req.auth.userId;
 
-    const post = await Post.findOne({ uuid }).populate('author', 'email');
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
+      const post = await Post.findOne({ uuid });
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
 
-    // If the post is not public and the user is not the owner, return 403
-    if (!post.isPublic && post.clerkId !== clerkId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
+      if (post.clerkId !== clerkId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
 
-    // Cache the result for 1 hour
-    await redisClient.setEx(`post:${uuid}`, 3600, JSON.stringify(post));
-    
-    res.json(post);
-  } catch (error) {
-    console.error('Error fetching post:', error);
-    res.status(500).json({ error: 'Failed to fetch post' });
-  }
+      await post.deleteOne();
+      res.json({ message: 'Post deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      res.status(500).json({ error: 'Failed to delete post' });
+    }
 });
-
-// Get public post by publicId (public access)
-router.get('/public/:publicId', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
-  try {
-    const { publicId } = req.params;
-    
-    // Try to get from cache first
-    const cachedPost = await redisClient.get(`public_post:${publicId}`);
-    if (cachedPost) {
-      return res.json(JSON.parse(cachedPost));
-    }
-
-    const post = await Post.findOne({ publicId, isPublic: true })
-      .populate('author', 'email');
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-
-    // Cache the result for 1 hour
-    await redisClient.setEx(`public_post:${publicId}`, 3600, JSON.stringify(post));
-    
-    res.json(post);
-  } catch (error) {
-    console.error('Error fetching public post:', error);
-    res.status(500).json({ error: 'Failed to fetch post' });
-  }
-});
-
-// Update post's public status
-router.put('/:uuid', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
-  try {
-    const { uuid } = req.params;
-    const title = req.body.title;
-    const content = req.body.content;
-    const style = req.body.style;
-    const isPublic = req.body.isPublic;
-    const clerkId = req.auth.userId;
-
-    const post = await Post.findOne({ uuid });
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-
-    // Check if user owns the post
-    if (post.clerkId !== clerkId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    // Update post fields
-    if (title) post.title = title;
-    if (content) post.content = content;
-    if (style) post.style = style;
-    if (typeof isPublic === 'boolean') post.isPublic = isPublic;
-
-    await post.save();
-
-    // Invalidate both caches
-    await redisClient.del(`post:${uuid}`);
-    if (post.publicId) {
-      await redisClient.del(`public_post:${post.publicId}`);
-    }
-    await redisClient.del(`user_posts:${clerkId}`);
-
-    res.json(post);
-  } catch (error) {
-    console.error('Error updating post:', error);
-    res.status(500).json({ error: 'Failed to update post' });
-  }
-});
-
-
-// delete post
-router.delete('/:uuid', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
-  try {
-    const { uuid } = req.params;
-    const clerkId = req.auth.userId;
-
-    const post = await Post.findOne({ uuid });
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-
-    // Check if user owns the post
-    if (post.clerkId !== clerkId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    await post.deleteOne();
-
-    // Invalidate user's posts cache
-    await redisClient.del(`user_posts:${clerkId}`);
-
-    res.json({ message: 'Post deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting post:', error);
-    res.status(500).json({ error: 'Failed to delete post' });
-  }
-});
-
-
 
 module.exports = router; 
