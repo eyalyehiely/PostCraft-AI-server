@@ -2,10 +2,12 @@
 import Link from 'next/link'
 import { Home, Settings, FileText, Menu, X } from 'lucide-react'
 import { useState } from 'react'
-
+import { SignOutButton, UserButton, useUser } from '@clerk/nextjs'
+import { Button } from './ui/button'
+import { toast } from 'sonner'
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
-
+  const { user } = useUser()
   const pages = [
     {
       name: 'Home',
@@ -23,6 +25,22 @@ export function Sidebar() {
       icon: Settings
     }
   ]
+
+  const handleSignOut = async () => {
+    try {
+      await window.Clerk.signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <>
@@ -64,6 +82,29 @@ export function Sidebar() {
               </Link>
             ))}
           </nav>
+           {/* User Section */}
+        <div className="absolute bottom-16 left-0 right-0 p-4 border-t border-border">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-accent/5">
+              <UserButton afterSignOutUrl="/" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {user?.fullName}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user?.emailAddresses[0]?.emailAddress}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleSignOut}
+              className="w-full"
+            >
+              Sign Out
+            </Button>
+          </div>
+        </div>
         </aside>
       </div>
     </>
