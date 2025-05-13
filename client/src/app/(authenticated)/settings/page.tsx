@@ -1,20 +1,71 @@
 'use client'
 
-import { UserProfile } from '@clerk/nextjs'
+import { UserButton, useUser } from '@clerk/nextjs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { useTheme } from 'next-themes'
 import { Label } from '@/components/ui/label'
 import { useEffect, useState } from 'react'
+import { Moon, User, Settings2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import { Input } from '@/components/ui/input'
+
 
 export default function SettingsPage() {
+  const { user } = useUser()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const [firstName, setFirstName] = useState(user?.firstName || '')
+  const [lastName, setLastName] = useState(user?.lastName || '')
+  const [isEditing, setIsEditing] = useState(false)
+  const [tempFirstName, setTempFirstName] = useState(firstName)
+  const [tempLastName, setTempLastName] = useState(lastName)
 
   // Avoid hydration mismatch
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handleSignOut = async () => {
+    try {
+      await window.Clerk.signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEdit = () => {
+    setTempFirstName(firstName)
+    setTempLastName(lastName)
+    setIsEditing(true)
+  }
+
+  const handleSave = async () => {
+    try {
+      // Here you would typically update the user's profile with Clerk
+      setFirstName(tempFirstName)
+      setLastName(tempLastName)
+      setIsEditing(false)
+      toast.success("Profile updated successfully")
+    } catch (error) {
+      toast.error("Failed to update profile")
+    }
+  }
+
+  const handleCancel = () => {
+    setTempFirstName(firstName)
+    setTempLastName(lastName)
+    setIsEditing(false)
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -23,7 +74,10 @@ export default function SettingsPage() {
         {/* Theme Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>Theme Settings</CardTitle>
+            <div className="flex items-center gap-2">
+              <Moon className="h-5 w-5" />
+              <CardTitle>Theme Settings</CardTitle>
+            </div>
             <CardDescription>Customize your application appearance</CardDescription>
           </CardHeader>
           <CardContent>
@@ -42,49 +96,99 @@ export default function SettingsPage() {
 
         
 
-        {/* Content Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Content Settings</CardTitle>
-            <CardDescription>Configure your content preferences</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="language">Default Language</Label>
-                <select
-                  id="language"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                >
-                  <option>English</option>
-                  <option>Spanish</option>
-                  <option>French</option>
-                  <option>German</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="content-length">Content Length</Label>
-                <select
-                  id="content-length"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                >
-                  <option>Short</option>
-                  <option>Medium</option>
-                  <option>Long</option>
-                </select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Profile Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>Profile Settings</CardTitle>
+            <div className="flex items-center gap-2">
+              <Settings2 className="h-5 w-5" />
+              <CardTitle>Profile Settings</CardTitle>
+            </div>
             <CardDescription>Manage your account settings</CardDescription>
           </CardHeader>
           <CardContent>
-            <UserProfile />
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-accent/5">
+                <UserButton afterSignOutUrl="/" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {user?.fullName}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user?.emailAddresses[0]?.emailAddress}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Personal Information</h3>
+                  {!isEditing ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEdit}
+                    >
+                      Edit Profile
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCancel}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSave}
+                      >
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      value={isEditing ? tempFirstName : firstName}
+                      onChange={(e) => isEditing && setTempFirstName(e.target.value)}
+                      placeholder="Enter your first name"
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      value={isEditing ? tempLastName : lastName}
+                      onChange={(e) => isEditing && setTempLastName(e.target.value)}
+                      placeholder="Enter your last name"
+                      disabled={!isEditing}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    value={user?.emailAddresses[0]?.emailAddress || ''}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={handleSignOut}
+                className="w-full"
+              >
+                Sign Out
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
