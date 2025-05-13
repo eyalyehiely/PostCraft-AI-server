@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { Home, Settings, FileText, Menu, X } from 'lucide-react'
 import { useState } from 'react'
-import { SignOutButton, UserButton, useUser } from '@clerk/nextjs'
+import { UserButton, useUser } from '@clerk/nextjs'
 import { Button } from './ui/button'
 import { toast } from 'sonner'
 export function Sidebar() {
@@ -65,16 +65,16 @@ export function Sidebar() {
 
         {/* Sidebar */}
         <aside
-          className={`fixed md:static w-64 border-r min-h-screen p-4 bg-white transition-transform duration-300 ease-in-out ${
+          className={`fixed md:static w-64 border-r min-h-screen p-4 bg-white dark:bg-black transition-transform duration-300 ease-in-out ${
             isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           }`}
         >
-          <nav className="space-y-2 mt-12 md:mt-0">
+          <nav className="space-y-2 mt-12 md:mt-0" >
             {pages.map((page) => (
               <Link
                 key={page.name}
                 href={page.href}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 hover:bg-gray-100"
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 hover:bg-gray-100  dark:text-white  dark:hover:bg-gray-900"
                 onClick={() => setIsOpen(false)}
               >
                 <page.icon className="h-4 w-4" />
