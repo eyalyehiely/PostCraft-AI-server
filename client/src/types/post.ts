@@ -2,6 +2,7 @@ export interface Post {
   id: number
   uuid: string
   title: string
+  publicId: string
   content: string
   preview: string
   date: string
