@@ -16,7 +16,7 @@ const connectDB = require('./config/db');
 
 // CORS middleware with explicit configuration
 app.use(cors({
-  origin: [ 'http://localhost:3000', 'http://localhost:3001'],
+  origin: [ 'http://localhost:3000', 'http://localhost:3001','https://postcraft-ai.up.railway.app',],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'svix-id', 'svix-timestamp', 'svix-signature'],
   credentials: true,
