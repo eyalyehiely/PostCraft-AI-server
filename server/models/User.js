@@ -6,7 +6,8 @@ const UserSchema = new mongoose.Schema({
   clerkId: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    index: true
   },
   email: {
     type: String,
@@ -29,44 +30,13 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: null
   },
-  isPay: {
-    type: Boolean,
-    default: false
-  },
+  
   isRegistrationComplete: {
     type: Boolean,
     default: false
   },
-  paddleCustomerId: {
-    type: String,
-    default: null
-  },
-  transactionId: {
-    type: String,
-    default: null
-  },
-  cardBrand: {
-    type: String,
-    default: null
-  },
-  cardLastFour: {
-    type: String,
-    default: null
-  },
-  cardExpiry: {
-    type: String,
-    default: null
-  },
-  paymentUpdatedAt: {
-    type: String,
-    default: null
-  },
-  lastCheckoutAttempt: {
-    timestamp: {
-      type: String,
-      default: null
-    }
-  },
+  
+  
   lastSignInAt: {
     type: String,
     default: null
@@ -97,7 +67,13 @@ const UserSchema = new mongoose.Schema({
   trialAnalysisCount: {
     type: Number,
     default: 0
-  }
+  },
+  posts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Post'
+  }]
+}, {
+  timestamps: true
 });
 
 // Helper function to format date and time in Israeli timezone
@@ -184,4 +160,6 @@ UserSchema.methods.comparePassword = async function(candidatePassword) {
 };
 
 // Fix: Check if model exists before creating it
-module.exports = mongoose.models.User || mongoose.model('User', UserSchema);
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
+
+module.exports = User;
