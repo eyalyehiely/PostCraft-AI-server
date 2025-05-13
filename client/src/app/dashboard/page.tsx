@@ -14,6 +14,23 @@ export default function Dashboard() {
   const [style, setStyle] = useState('')
   const [content, setContent] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+
+  const typeText = (text: string) => {
+    let index = 0
+    setIsTyping(true)
+    setContent('')
+
+    const typingInterval = setInterval(() => {
+      if (index < text.length) {
+        setContent(prev => prev + text[index])
+        index++
+      } else {
+        clearInterval(typingInterval)
+        setIsTyping(false)
+      }
+    }, 30) // Adjust typing speed here (lower = faster)
+  }
 
   const handleGenerate = async () => {
     if (!topic || !style) {
@@ -24,7 +41,7 @@ export default function Dashboard() {
     setIsGenerating(true)
     try {
       const generatedContent = await generateContent({ topic, style })
-      setContent(generatedContent)
+      typeText(generatedContent)
       toast.success('Content generated successfully!')
     } catch (error) {
       toast.error('Failed to generate content')
@@ -99,6 +116,7 @@ export default function Dashboard() {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="min-h-[200px]"
+              disabled={isTyping}
             />
             <Button 
               className="w-full" 
