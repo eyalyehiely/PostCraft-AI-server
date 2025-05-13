@@ -7,4 +7,10 @@ export interface Post {
   date: string
   style: string
   isPublic: boolean
+  author: {
+    name: string
+    image?: string
+  }
+  createdAt: string
+  updatedAt: string
 } 

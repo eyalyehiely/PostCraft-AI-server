@@ -11,6 +11,7 @@ export default authMiddleware({
     "/_next(.*)",
     "/favicon.ico",
     "/api/trpc(.*)",
+    "/posts(.*)",
   ],
   ignoredRoutes: [
     "/_next(.*)",

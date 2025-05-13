@@ -10,11 +10,13 @@ import React, { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { fetchPosts } from '@/services/posts/fetchPosts'
 import { Post } from '@/types/post'
-import { TrashIcon, PencilIcon, PlusIcon, XIcon } from 'lucide-react'
+import { TrashIcon, PencilIcon, PlusIcon, XIcon,ExternalLink } from 'lucide-react'
 import { editPost } from '@/services/posts/edit'
 import { toast } from 'sonner'
 import dynamic from 'next/dynamic'
 import { deletePost } from '@/services/posts/delete'
+
+
 // Dynamically import Quill to avoid SSR issues
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
 import 'react-quill/dist/quill.snow.css'
@@ -111,6 +113,10 @@ function Posts() {
     } catch (error) {
       console.error('Error deleting post:', error)
     }
+  }
+
+  const generateLink = (publicId: string) => {
+    return `https://postcraft.ai/posts/${publicId}`
   }
 
   return (
@@ -255,9 +261,25 @@ function Posts() {
                       <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
                         {post.title}
                       </CardTitle>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                        {post.date}
-                      </span>
+                      {post.isPublic && (
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
+                          onClick={() => {
+                            const link = generateLink(post.publicId);
+                            navigator.clipboard.writeText(link);
+                            toast.success('Link copied to clipboard!');
+                          }}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {!post.isPublic && (
+                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                          {post.date}
+                        </span>
+                      )}
                     </div>
                     <CardDescription className="text-xs mt-1">
                       Style: {post.style}, Status: {post.isPublic ? 'Public' : 'Private'}
