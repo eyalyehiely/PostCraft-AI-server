@@ -8,7 +8,7 @@ const webhookRoutes = require('./routes/webhooks');
 const profileRoutes = require('./routes/profile');
 const postsRoutes = require('./routes/posts');
 const rawBody = require('./middleware/raw-body');
-const { connectRedis } = require('./config/redis');
+const { connectRedis } = require('./config/redis') ;
 
 const app = express();
 const port = process.env.PORT || 3000;
