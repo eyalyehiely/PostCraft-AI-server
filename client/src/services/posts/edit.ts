@@ -1,20 +1,17 @@
 import { Post } from '@/types/post'
+import axios from 'axios'
 
-export async function editPost(postId: number, updatedPost: Partial<Post>) {
+export async function editPost(postUuid: string, updatedPost: Partial<Post>, token: string) {
+  const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'
   try {
-    const response = await fetch(`/api/posts/${postId}`, {
-      method: 'PUT',
+    const response = await axios.put(`${PUBLIC_API_URL}/posts/${postUuid}`, updatedPost, {
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify(updatedPost),
     })
 
-    if (!response.ok) {
-      throw new Error('Failed to update post')
-    }
-
-    return await response.json()
+    return response.data
   } catch (error) {
     console.error('Error updating post:', error)
     throw error
