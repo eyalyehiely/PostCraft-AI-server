@@ -60,14 +60,6 @@ const UserSchema = new mongoose.Schema({
   resetPasswordExpires: {
     type: String
   },
-  isTrialUsed: {
-    type: Boolean,
-    default: false
-  },
-  trialAnalysisCount: {
-    type: Number,
-    default: 0
-  },
   posts: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Post'
