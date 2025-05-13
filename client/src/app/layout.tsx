@@ -1,36 +1,40 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import { type Metadata } from 'next'
+import { ClerkProvider } from '@clerk/nextjs'
+import { Inter } from 'next/font/google'
+import './globals.css'
 import { Toaster } from "@/components/ui/sonner";
-import { Header } from "@/components/Header";
-import { Sidebar } from "@/components/Sidebar";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+})
 
 export const metadata: Metadata = {
-  title: "PostCraft AI - Blog Post Generator",
-  description: "Generate AI-powered blog posts with ease",
-};
+  title: 'PostCraft AI',
+  description: 'AI-powered content creation and management platform',
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <div className="min-h-screen">
-          <Header />
-          <div className="flex">
-            <Sidebar />
-            <main className="flex-1 p-6">
-              {children}
-            </main>
-          </div>
-        </div>
-        <Toaster />
-      </body>
-    </html>
-  );
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        baseTheme: undefined,
+        variables: {
+          colorPrimary: '#3B82F6',
+        },
+      }}
+    >
+      <html lang="en">
+        <body className={`${inter.variable} antialiased`}>
+          {children}
+          <Toaster />
+        </body>
+      </html>
+    </ClerkProvider>
+  )
 }
