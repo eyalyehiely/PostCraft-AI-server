@@ -1,44 +1,61 @@
-import { Metadata } from 'next'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Settings | PostCraft AI',
-  description: 'Configure your application settings',
-}
+import { UserProfile } from '@clerk/nextjs'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
+import { useTheme } from 'next-themes'
+import { Label } from '@/components/ui/label'
+import { useEffect, useState } from 'react'
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Application Settings</h1>
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold mb-4">API Configuration</h2>
+      <div className="grid gap-6">
+        {/* Theme Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Theme Settings</CardTitle>
+            <CardDescription>Customize your application appearance</CardDescription>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">API Key</label>
-                <input
-                  type="password"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  placeholder="Enter your API key"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">API Endpoint</label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  placeholder="https://api.example.com"
+              <div className="flex items-center justify-between">
+                <Label htmlFor="dark-mode">Dark Mode</Label>
+                <Switch 
+                  id="dark-mode" 
+                  checked={mounted && theme === 'dark'}
+                  onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
                 />
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Content Settings</h2>
+        
+
+        {/* Content Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Content Settings</CardTitle>
+            <CardDescription>Configure your content preferences</CardDescription>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Default Language</label>
-                <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <Label htmlFor="language">Default Language</Label>
+                <select
+                  id="language"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
                   <option>English</option>
                   <option>Spanish</option>
                   <option>French</option>
@@ -46,25 +63,30 @@ export default function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Content Length</label>
-                <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <Label htmlFor="content-length">Content Length</Label>
+                <select
+                  id="content-length"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
                   <option>Short</option>
                   <option>Medium</option>
                   <option>Long</option>
                 </select>
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="flex justify-end">
-            <button
-              type="button"
-              className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              Save Settings
-            </button>
-          </div>
-        </div>
+        {/* Profile Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Settings</CardTitle>
+            <CardDescription>Manage your account settings</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <UserProfile />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
