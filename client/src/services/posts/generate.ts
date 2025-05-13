@@ -4,17 +4,23 @@ import axios from 'axios';
 interface GenerateParams {
   topic: string;
   style: string;
+  token: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-export async function generateContent({ topic, style }: GenerateParams): Promise<string> {
+export async function generateContent({ topic, style, token }: GenerateParams): Promise<string> {
   try {
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
     const { data } = await axios.post(`${API_URL}/posts/generate`, {
       topic,
       style
     }, {
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
     });
 
