@@ -44,15 +44,6 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
                     first_name: first_name || '',
                     last_name: last_name || '',
                     image_url,
-                    isRegistrationComplete: false,
-                    isPay: false,
-                    subscriptionId: null,
-                    subscriptionStatus: 'none',
-                    paymentUpdatedAt: null,
-                    lastCheckoutAttempt: {
-                        url: null,
-                        timestamp: null
-                    },
                     lastSignInAt: new Date(),
                     createdAt: new Date(),
                     updatedAt: new Date()
