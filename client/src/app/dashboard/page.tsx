@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
+import { generateContent } from '@/services/generate'
 
 export default function Dashboard() {
   const [topic, setTopic] = useState('')
@@ -22,10 +23,8 @@ export default function Dashboard() {
 
     setIsGenerating(true)
     try {
-      // TODO: Implement AI generation logic here
-      // For now, we'll just simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      setContent('This is a placeholder for the AI-generated content. The actual implementation will connect to an AI service to generate blog posts based on the topic and style.')
+      const generatedContent = await generateContent({ topic, style })
+      setContent(generatedContent)
       toast.success('Content generated successfully!')
     } catch (error) {
       toast.error('Failed to generate content')

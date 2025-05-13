@@ -16,7 +16,7 @@ const connectDB = require('./config/db');
 
 // CORS middleware with explicit configuration
 app.use(cors({
-  origin: [ 'http://localhost:3000', 'http://localhost:4173'],
+  origin: [ 'http://localhost:3000', 'http://localhost:3001'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'svix-id', 'svix-timestamp', 'svix-signature'],
   credentials: true,
