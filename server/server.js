@@ -4,22 +4,23 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { ClerkExpressWithAuth } = require('@clerk/clerk-sdk-node');
 const webhookRoutes = require('./routes/webhooks');
 const profileRoutes = require('./routes/profile');
 const postsRoutes = require('./routes/posts');
 const rawBody = require('./middleware/raw-body');
-const { connectRedis } = require('./config/redis') ;
+const { connectRedis } = require('./config/redis');
+const { ClerkExpressWithAuth } = require('@clerk/clerk-sdk-node');
 
 const app = express();
 const port = process.env.PORT || 3000;
 const connectDB = require('./config/db');
 
+// Initialize Clerk
+app.use(ClerkExpressWithAuth());
+
 // Trust proxy for rate limiter
 app.set('trust proxy', 1);
 
-// Initialize Clerk middleware
-app.use(ClerkExpressWithAuth());
 
 // CORS middleware with explicit configuration
 app.use(cors({

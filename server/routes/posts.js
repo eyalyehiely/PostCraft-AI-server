@@ -6,6 +6,7 @@ const User = require('../models/User');
 const { redisClient } = require('../config/redis');
 const { generateLimiter, apiLimiter } = require('../middleware/rateLimiter');
 const { ClerkExpressRequireAuth } = require('@clerk/clerk-sdk-node');
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
@@ -13,8 +14,13 @@ const openai = new OpenAI({
 // Generate blog post
 router.post('/generate', generateLimiter, ClerkExpressRequireAuth(), async (req, res) => {
   try {
+    console.log('Auth object:', req.auth);
     const { topic, style } = req.body;
     const clerkId = req.auth.userId;
+
+    if (!topic || !style) {
+      return res.status(400).json({ error: 'Topic and style are required' });
+    }
 
     const prompt = `Write a ${style} blog post about ${topic}. Make it engaging and informative.`;
 
@@ -31,8 +37,7 @@ router.post('/generate', generateLimiter, ClerkExpressRequireAuth(), async (req,
       style
     });
   } catch (error) {
-    console.error('Error generating post:', error);
-    res.status(500).json({ error: 'Failed to generate blog post' });
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -132,7 +137,7 @@ router.get('/:uuid', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => 
 });
 
 // Get public post by publicId (public access)
-router.get('/public/:publicId', apiLimiter, async (req, res) => {
+router.get('/public/:publicId', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
   try {
     const { publicId } = req.params;
     
