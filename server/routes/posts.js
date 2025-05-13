@@ -159,10 +159,13 @@ router.get('/public/:publicId', apiLimiter, async (req, res) => {
 });
 
 // Update post's public status
-router.patch('/:uuid/public', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
+router.put('/:uuid', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
   try {
     const { uuid } = req.params;
-    const { isPublic } = req.body;
+    const title = req.body.title;
+    const content = req.body.content;
+    const style = req.body.style;
+    const isPublic = req.body.isPublic;
     const clerkId = req.auth.userId;
 
     const post = await Post.findOne({ uuid });
@@ -175,7 +178,12 @@ router.patch('/:uuid/public', apiLimiter, ClerkExpressRequireAuth(), async (req,
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    post.isPublic = isPublic;
+    // Update post fields
+    if (title) post.title = title;
+    if (content) post.content = content;
+    if (style) post.style = style;
+    if (typeof isPublic === 'boolean') post.isPublic = isPublic;
+
     await post.save();
 
     // Invalidate both caches
@@ -187,9 +195,40 @@ router.patch('/:uuid/public', apiLimiter, ClerkExpressRequireAuth(), async (req,
 
     res.json(post);
   } catch (error) {
-    console.error('Error updating post public status:', error);
+    console.error('Error updating post:', error);
     res.status(500).json({ error: 'Failed to update post' });
   }
 });
+
+
+// delete post
+router.delete('/:uuid', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const clerkId = req.auth.userId;
+
+    const post = await Post.findOne({ uuid });
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    // Check if user owns the post
+    if (post.clerkId !== clerkId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await post.deleteOne();
+
+    // Invalidate user's posts cache
+    await redisClient.del(`user_posts:${clerkId}`);
+
+    res.json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    res.status(500).json({ error: 'Failed to delete post' });
+  }
+});
+
+
 
 module.exports = router; 
