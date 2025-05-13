@@ -26,7 +26,7 @@ export function Header() {
   }, [isSidebarOpen]);
 
   return (
-    <header className="sticky top-0 z-30 bg-card backdrop-blur-md border-b border-border w-full">
+    <header className="sticky top-0 z-30 bg-card backdrop-blur-md border-b border-border w-full dark:bg-black">
       <div className="px-4 h-16 flex items-center">
         {/* Left side - Page Title */}
         <div className="flex items-center">
