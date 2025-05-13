@@ -21,7 +21,6 @@ app.use(ClerkExpressWithAuth());
 // Trust proxy for rate limiter
 app.set('trust proxy', 1);
 
-
 // CORS middleware with explicit configuration
 app.use(cors({
   origin: [ 'http://localhost:3000', 'http://localhost:3001','https://postcraft-ai.up.railway.app','https://postcraft-server.up.railway.app'],
@@ -45,7 +44,14 @@ app.use((req, res, next) => {
 
 // Connect to MongoDB and Redis
 connectDB();
-connectRedis();
+
+// Only try to connect to Redis if we're in production
+if (process.env.NODE_ENV === 'production') {
+  connectRedis().catch(err => {
+    console.error('Failed to connect to Redis:', err);
+    console.log('Continuing without Redis...');
+  });
+}
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)

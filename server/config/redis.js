@@ -33,13 +33,18 @@ redisClient.on('error', (err) => {
 });
 
 redisClient.on('connect', () => {
-  console.log('Redis Client Connected Successfully');
+  console.log('Redis Client Connected');
+});
+
+redisClient.on('reconnecting', () => {
+  console.log('Redis Client Reconnecting');
 });
 
 const connectRedis = async () => {
   try {
     console.log('Attempting to connect to Redis...');
     await redisClient.connect();
+    console.log('Redis connection established');
   } catch (error) {
     console.error('Redis connection error:', error);
     console.error('Redis Connection Error Details:', {
