@@ -59,11 +59,7 @@ const UserSchema = new mongoose.Schema({
   },
   resetPasswordExpires: {
     type: String
-  },
-  posts: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Post'
-  }]
+  }
 }, {
   timestamps: true
 });
