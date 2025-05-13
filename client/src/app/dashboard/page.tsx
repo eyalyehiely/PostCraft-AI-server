@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { generateContent } from '@/services/generate'
+import { generateContent } from '@/services/posts/generate'
 
 export default function Dashboard() {
   const [topic, setTopic] = useState('')
@@ -15,11 +15,13 @@ export default function Dashboard() {
   const [content, setContent] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
+  const [showGeneratedContent, setShowGeneratedContent] = useState(false)
 
   const typeText = (text: string) => {
     let index = 0
     setIsTyping(true)
     setContent('')
+    setShowGeneratedContent(true)
 
     const typingInterval = setInterval(() => {
       if (index < text.length) {
@@ -29,7 +31,7 @@ export default function Dashboard() {
         clearInterval(typingInterval)
         setIsTyping(false)
       }
-    }, 30) // Adjust typing speed here (lower = faster)
+    }, 30)
   }
 
   const handleGenerate = async () => {
@@ -63,13 +65,13 @@ export default function Dashboard() {
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold mb-8">Blog Post Generator</h1>
       
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Generate New Post</CardTitle>
+      <div className="flex flex-col gap-6">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
+          <CardHeader className="bg-muted/50">
+            <CardTitle className="text-xl">Generate New Post</CardTitle>
             <CardDescription>Enter your topic and preferred writing style</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6 pt-6">
             <div className="space-y-2">
               <label htmlFor="topic" className="text-sm font-medium">Topic</label>
               <Input
@@ -77,13 +79,14 @@ export default function Dashboard() {
                 placeholder="e.g., Tech News in a Professional Tone"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
+                className="w-full"
               />
             </div>
             
             <div className="space-y-2">
               <label htmlFor="style" className="text-sm font-medium">Writing Style</label>
               <Select value={style} onValueChange={setStyle}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a style" />
                 </SelectTrigger>
                 <SelectContent>
@@ -96,7 +99,7 @@ export default function Dashboard() {
             </div>
 
             <Button 
-              className="w-full" 
+              className="w-full bg-primary hover:bg-primary/90" 
               onClick={handleGenerate}
               disabled={isGenerating}
             >
@@ -105,28 +108,57 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Generated Content</CardTitle>
-            <CardDescription>Edit and save your generated content</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea
-              placeholder="Your generated content will appear here..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="min-h-[200px]"
-              disabled={isTyping}
-            />
-            <Button 
-              className="w-full" 
-              onClick={handleSaveDraft}
-              disabled={!content}
-            >
-              Save Draft
-            </Button>
-          </CardContent>
-        </Card>
+        {showGeneratedContent && (
+          <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
+            <CardHeader className="bg-muted/50 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-xl">Generated Content</CardTitle>
+                <CardDescription>Edit and save your generated content</CardDescription>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowGeneratedContent(false)}
+                className="h-8 w-8 p-0"
+              >
+                <span className="sr-only">Close</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              <Textarea
+                placeholder="Your generated content will appear here..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="min-h-[300px] resize-none"
+                disabled={isTyping}
+              />
+              <Button 
+                className="w-full bg-primary hover:bg-primary/90" 
+                onClick={handleSaveDraft}
+                disabled={!content}
+              >
+                Save Draft
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        
       </div>
     </div>
   )

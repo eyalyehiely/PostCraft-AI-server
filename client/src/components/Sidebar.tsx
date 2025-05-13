@@ -14,12 +14,12 @@ export function Sidebar() {
     },
     {
       name: 'Posts',
-      href: '/dashboard/posts',
+      href: '/posts',
       icon: FileText
     },
     {
       name: 'Settings',
-      href: '/dashboard/settings',
+      href: '/settings',
       icon: Settings
     }
   ]
