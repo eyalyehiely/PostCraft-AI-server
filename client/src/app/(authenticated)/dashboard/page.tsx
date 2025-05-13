@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner'
 import { generateContent } from '@/services/posts/generate'
 import { useAuth } from '@clerk/nextjs'
-
+import { savePost } from '@/services/posts/savePost'
 export default function Dashboard() {
   const [topic, setTopic] = useState('')
   const [style, setStyle] = useState('')
@@ -60,13 +60,23 @@ export default function Dashboard() {
     }
   }
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     if (!content) {
       toast.error('No content to save')
       return
     }
-    // TODO: Implement draft saving logic
-    toast.success('Draft saved successfully!')
+    try {
+      const token = await getToken()
+      if (!token) {
+        throw new Error('Not authenticated')
+      }
+      const savedPost = await savePost({ title: topic, content, style, token })
+      console.log(savedPost)
+      toast.success('Draft saved successfully!')
+    } catch (error) {
+      console.error('Error saving draft:', error)
+      toast.error('Failed to save draft')
+    }
   }
 
   return (
