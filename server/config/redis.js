@@ -1,11 +1,8 @@
 const { createClient } = require('redis');
 
-// Default Redis configuration
+// Redis configuration that works both locally and on Railway
 const redisConfig = {
-  socket: {
-    host: '127.0.0.1',
-    port: 6379
-  }
+  url: process.env.REDIS_URL || 'redis://127.0.0.1:6379'
 };
 
 const redisClient = createClient(redisConfig);
