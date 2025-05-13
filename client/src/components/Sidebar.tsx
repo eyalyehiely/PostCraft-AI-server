@@ -6,6 +6,24 @@ import { useState } from 'react'
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
 
+  const pages = [
+    {
+      name: 'Home',
+      href: '/dashboard',
+      icon: Home
+    },
+    {
+      name: 'Posts',
+      href: '/dashboard/posts',
+      icon: FileText
+    },
+    {
+      name: 'Settings',
+      href: '/dashboard/settings',
+      icon: Settings
+    }
+  ]
+
   return (
     <>
       {/* Mobile menu button */}
@@ -34,30 +52,17 @@ export function Sidebar() {
           }`}
         >
           <nav className="space-y-2 mt-12 md:mt-0">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 hover:bg-gray-100"
-              onClick={() => setIsOpen(false)}
-            >
-              <Home className="h-4 w-4" />
-              <span>Home</span>
-            </Link>
-            <Link
-              href="/dashboard/posts"
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 hover:bg-gray-100"
-              onClick={() => setIsOpen(false)}
-            >
-              <FileText className="h-4 w-4" />
-              <span>Posts</span>
-            </Link>
-            <Link
-              href="/dashboard/settings"
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 hover:bg-gray-100"
-              onClick={() => setIsOpen(false)}
-            >
-              <Settings className="h-4 w-4" />
-              <span>Settings</span>
-            </Link>
+            {pages.map((page) => (
+              <Link
+                key={page.name}
+                href={page.href}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 hover:bg-gray-100"
+                onClick={() => setIsOpen(false)}
+              >
+                <page.icon className="h-4 w-4" />
+                <span>{page.name}</span>
+              </Link>
+            ))}
           </nav>
         </aside>
       </div>
