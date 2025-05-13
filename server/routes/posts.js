@@ -136,12 +136,11 @@ router.get('/public/:publicId',
     try {
       const { publicId } = req.params;
       const post = await Post.findOne({ publicId, isPublic: true })
-        .populate('author', 'email');
+        .populate('author', 'email first_name last_name');
       
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
-
       res.json(post);
     } catch (error) {
       console.error('Error fetching public post:', error);
