@@ -11,10 +11,10 @@ const openai = new OpenAI({
 });
 
 // Generate blog post
-router.post('/generate', generateLimiter, async (req, res) => {
+router.post('/generate', generateLimiter, ClerkExpressRequireAuth(), async (req, res) => {
   try {
     const { topic, style } = req.body;
-    // const clerkId = req.auth.userId;
+    const clerkId = req.auth.userId;
 
     const prompt = `Write a ${style} blog post about ${topic}. Make it engaging and informative.`;
 
@@ -37,9 +37,9 @@ router.post('/generate', generateLimiter, async (req, res) => {
 });
 
 // Save post
-router.post('/save', apiLimiter, async (req, res) => {
+router.post('/save', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
   try {
-    const { title, content, style, isPublic } = req.body;
+    const { title, content, style } = req.body;
     const clerkId = req.auth.userId;
 
     // Find or create user
@@ -54,15 +54,11 @@ router.post('/save', apiLimiter, async (req, res) => {
       style,
       author: user._id,
       clerkId,
-      isPublic: isPublic || false
+      isPublic: false
     });
 
     await post.save();
 
-    // Add post to user's posts array
-    user.posts.push(post._id);
-    await user.save();
-    
     // Invalidate user's posts cache
     await redisClient.del(`user_posts:${clerkId}`);
     
@@ -74,7 +70,7 @@ router.post('/save', apiLimiter, async (req, res) => {
 });
 
 // Get user's posts
-router.get('/user', apiLimiter, async (req, res) => {
+router.get('/user', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
   try {
     const clerkId = req.auth.userId;
     
@@ -104,7 +100,7 @@ router.get('/user', apiLimiter, async (req, res) => {
 });
 
 // Get single post by UUID (internal API access)
-router.get('/:uuid', apiLimiter, async (req, res) => {
+router.get('/:uuid', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
   try {
     const { uuid } = req.params;
     const clerkId = req.auth.userId;
@@ -163,7 +159,7 @@ router.get('/public/:publicId', apiLimiter, async (req, res) => {
 });
 
 // Update post's public status
-router.patch('/:uuid/public', apiLimiter, async (req, res) => {
+router.patch('/:uuid/public', apiLimiter, ClerkExpressRequireAuth(), async (req, res) => {
   try {
     const { uuid } = req.params;
     const { isPublic } = req.body;
