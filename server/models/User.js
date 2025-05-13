@@ -35,7 +35,18 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  
+  isAdmin: {
+    type: Boolean,
+    default: false
+  },
+  wordLimit: {
+    type: Number,
+    required: false
+  },
+  pronounStyle: {
+    type: String,
+    required: false
+  },
   
   lastSignInAt: {
     type: String,
