@@ -14,7 +14,7 @@ const postSchema = new mongoose.Schema({
   style: {
     type: String,
     required: true,
-    enum: ['casual', 'Professional','Technical', 'Creative','Funny']
+    enum: ['Casual', 'Professional','Technical', 'Creative','Funny']
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,

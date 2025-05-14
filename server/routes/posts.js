@@ -24,7 +24,7 @@ router.post('/generate', generateLimiter, ClerkExpressRequireAuth(), async (req,
     let prompt = `Write a ${style} blog post about ${topic}.`;
     
     if (wordLimit) {
-      prompt += ` Keep it within ${wordLimit} words.`;
+      prompt += ` don't exceed ${wordLimit} words!`;
     }
     
     if (pronounStyle) {
