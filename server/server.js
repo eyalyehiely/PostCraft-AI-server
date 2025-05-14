@@ -24,7 +24,7 @@ app.set('trust proxy', 1);
 
 // CORS middleware with explicit configuration
 app.use(cors({
-  origin: [ 'http://localhost:3000', 'http://localhost:3001','https://postcraft-ai.up.railway.app','https://postcraft-server.up.railway.app'],
+  origin: [ 'http://localhost:3000', 'http://localhost:3001','http://localhost:3002','https://postcraft-ai.up.railway.app','https://postcraft-server.up.railway.app', 'https://postcraft-ai-adminpanel.up.railway.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'svix-id', 'svix-timestamp', 'svix-signature'],
   credentials: true,
