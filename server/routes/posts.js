@@ -67,7 +67,7 @@ router.post('/generate', generateLimiter, ClerkExpressRequireAuth(), async (req,
 router.post('/save', 
   apiLimiter, 
   ClerkExpressRequireAuth(),
-  redisHandler.deleteFromCache(req => `user_posts:${req.auth.userId}`),
+  redisHandler.deleteFromCache('user_posts'),
   async (req, res) => {
     try {
       const { title, content, style } = req.body;
@@ -101,7 +101,7 @@ router.post('/save',
 router.get('/user', 
   apiLimiter, 
   ClerkExpressRequireAuth(),
-  redisHandler.getFromCache(req => `user_posts:${req.auth.userId}`),
+  redisHandler.getFromCache('user_posts'),
   async (req, res) => {
     try {
       const clerkId = req.auth.userId;
@@ -121,14 +121,14 @@ router.get('/user',
       res.status(500).json({ error: 'Failed to fetch posts' });
     }
 },
-redisHandler.setToCache(req => `user_posts:${req.auth.userId}`, 300)
+redisHandler.setToCache('user_posts', 300)
 );
 
 // Get single post by UUID
 router.get('/:uuid', 
   apiLimiter, 
   ClerkExpressRequireAuth(),
-  redisHandler.getFromCache(req => `post:${req.params.uuid}`),
+  redisHandler.getFromCache('post'),
   async (req, res) => {
     try {
       const { uuid } = req.params;
@@ -149,13 +149,13 @@ router.get('/:uuid',
       res.status(500).json({ error: 'Failed to fetch post' });
     }
 },
-redisHandler.setToCache(req => `post:${req.params.uuid}`, 3600)
+redisHandler.setToCache('post', 3600)
 );
 
 // Get public post by publicId
 router.get('/public/:publicId', 
   apiLimiter, 
-  redisHandler.getFromCache(req => `public_post:${req.params.publicId}`),
+  redisHandler.getFromCache('public_post'),
   async (req, res) => {
     try {
       const { publicId } = req.params;
@@ -171,18 +171,14 @@ router.get('/public/:publicId',
       res.status(500).json({ error: 'Failed to fetch post' });
     }
 },
-redisHandler.setToCache(req => `public_post:${req.params.publicId}`, 3600)
+redisHandler.setToCache('public_post', 3600)
 );
 
 // Update post
 router.put('/:uuid', 
   apiLimiter, 
   ClerkExpressRequireAuth(),
-  redisHandler.deleteMultipleFromCache(req => [
-    `post:${req.params.uuid}`,
-    `user_posts:${req.auth.userId}`,
-    req.body.publicId ? `public_post:${req.body.publicId}` : null
-  ].filter(Boolean)),
+  redisHandler.deleteMultipleFromCache(['post', 'user_posts', 'public_post']),
   async (req, res) => {
     try {
       const { uuid } = req.params;
@@ -198,10 +194,12 @@ router.put('/:uuid',
         return res.status(403).json({ error: 'Access denied' });
       }
 
-      if (title) post.title = title;
-      if (content) post.content = content;
-      if (style) post.style = style;
-      if (typeof isPublic === 'boolean') post.isPublic = isPublic;
+      // Update post fields
+      post.title = title || post.title;
+      post.content = content || post.content;
+      post.style = style || post.style;
+      post.isPublic = isPublic !== undefined ? isPublic : post.isPublic;
+      post.updatedAt = new Date();
 
       await post.save();
       res.json(post);

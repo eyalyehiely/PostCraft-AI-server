@@ -7,6 +7,7 @@ const cors = require('cors');
 const webhookRoutes = require('./routes/webhooks');
 const profileRoutes = require('./routes/profile');
 const postsRoutes = require('./routes/posts');
+const adminRoutes = require('./routes/admin');
 const rawBody = require('./middleware/raw-body');
 const { connectRedis } = require('./config/redis');
 const { ClerkExpressWithAuth } = require('@clerk/clerk-sdk-node');
@@ -69,6 +70,7 @@ app.use(express.urlencoded({ extended: true }));
 // Other routes
 app.use('/api/profile', profileRoutes);
 app.use('/api/posts', postsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
