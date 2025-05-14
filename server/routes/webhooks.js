@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const { Webhook } = require('svix');
-// const { sendWelcomeEmail, sendEmailToOwner } = require('./mailing');
+const { sendWelcomeEmail, sendEmailToOwner } = require('./mailing');
 const { verifyWebhook } = require('@clerk/express/webhooks');
 
 // Webhook route for handling user creation
@@ -49,8 +49,8 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
                     updatedAt: new Date()
                 });
                 
-                // await sendWelcomeEmail(email, first_name);
-                // await sendEmailToOwner(email, first_name);
+                await sendWelcomeEmail(email, first_name);
+                await sendEmailToOwner(email, first_name);
                 console.log('Created user:', user);
                 break;
 
