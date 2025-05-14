@@ -21,18 +21,32 @@ router.get('/all-posts',
 );
 
 router.get('/all-users', 
-  ClerkExpressRequireAuth(),
-  redisHandler.getFromCache('admin:all-users'),
-  async (req, res) => {
-    try {
-      const users = await User.find().sort({ createdAt: -1 });
-      res.status(200).json(users.length);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch users' });
+    ClerkExpressRequireAuth(),
+    redisHandler.getFromCache('admin:all-users'),
+    async (req, res) => {
+      try {
+        const users = await User.find().sort({ createdAt: -1 });
+        res.status(200).json(users);
+      } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch users' });
+      }
+    },
+    redisHandler.setToCache('admin:all-users', 300)
+  );
+
+
+router.delete('/users/:userId',
+    ClerkExpressRequireAuth(),
+    async (req, res) => {
+        try {
+        const { userId } = req.params;
+        await User.findByIdAndDelete(userId);
+        res.status(200).json({ message: 'User deleted successfully' });
+        } catch (error) {
+        res.status(500).json({ error: 'Failed to delete user' });
+        }
     }
-  },
-  redisHandler.setToCache('admin:all-users', 300)
-);
+    );
 
 router.get('/public-posts', 
   ClerkExpressRequireAuth(),
