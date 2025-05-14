@@ -70,7 +70,7 @@ router.post('/save',
   redisHandler.deleteFromCache('user_posts'),
   async (req, res) => {
     try {
-      const { title, content, style } = req.body;
+      const { title, content, style, wordLimit, pronounStyle } = req.body;
       const clerkId = req.auth.userId;
 
       let user = await User.findOne({ clerkId });
