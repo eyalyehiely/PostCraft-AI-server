@@ -101,7 +101,7 @@ router.post('/save',
 router.get('/user', 
   apiLimiter, 
   ClerkExpressRequireAuth(),
-  redisHandler.getFromCache('user_posts'),
+  redisHandler.getFromCache(req => `user_posts:${req.auth.userId}`),
   async (req, res) => {
     try {
       const clerkId = req.auth.userId;
@@ -121,14 +121,14 @@ router.get('/user',
       res.status(500).json({ error: 'Failed to fetch posts' });
     }
 },
-redisHandler.setToCache('user_posts', 300)
+redisHandler.setToCache(req => `user_posts:${req.auth.userId}`, 300)
 );
 
 // Get single post by UUID
 router.get('/:uuid', 
   apiLimiter, 
   ClerkExpressRequireAuth(),
-  redisHandler.getFromCache('post'),
+  redisHandler.getFromCache(req => `post:${req.params.uuid}`),
   async (req, res) => {
     try {
       const { uuid } = req.params;
@@ -149,7 +149,7 @@ router.get('/:uuid',
       res.status(500).json({ error: 'Failed to fetch post' });
     }
 },
-redisHandler.setToCache('post', 3600)
+redisHandler.setToCache(req => `post:${req.params.uuid}`, 3600)
 );
 
 // Get public post by publicId
@@ -182,7 +182,7 @@ router.put('/:uuid',
   async (req, res) => {
     try {
       const { uuid } = req.params;
-      const { title, content, style, isPublic } = req.body;
+      const { title, content, style, isPublic, wordLimit, pronounStyle } = req.body;
       const clerkId = req.auth.userId;
 
       const post = await Post.findOne({ uuid });
@@ -198,6 +198,8 @@ router.put('/:uuid',
       post.title = title || post.title;
       post.content = content || post.content;
       post.style = style || post.style;
+      post.wordLimit = wordLimit || post.wordLimit;
+      post.pronounStyle = pronounStyle || post.pronounStyle;
       post.isPublic = isPublic !== undefined ? isPublic : post.isPublic;
       post.updatedAt = new Date();
 
